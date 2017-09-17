@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>01_三角和方框的故事</title>
+
+    <script type="text/javascript" src="../js/Oak3D_v_0_5.js"></script>
+
+    <!-- 顶点着色器 -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 aVertexPosition;
+
+        uniform mat4 uPMatrix;
+        uniform mat4 uMVMatrix;
+
+        void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        }
+    </script>
+
+    <!-- 片源着色器 -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+        precision mediump float;
+
+        void main(void) {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        }
+    </script>
+
+    <script type="text/javascript">
+        var start = function () {
+            // 上下文环境
+            var canvas = document.getElementById("mycanvas");
+            var gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+            gl.viewport(0, 0, gl.viewportWidth, gl.viewportWidth);
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+
+            // 顶点着色器
+            var shader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(shader, document.getElementById('shader-vs').innerHTML);
+            gl.compileShader(shader);
+            var vertexShader = shader;
+
+            // 片源着色器
+            var shader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(shader, document.getElementById('shader-fs').innerHTML);
+            gl.compileShader(shader);
+            var fragmentShader = shader;
+
+            // 着色器程序
+            var shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            gl.useProgram(shaderProgram);
+
+            // 缓存
+            var buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+            // 顶点
+            var vertices = [
+                 1.0, 1.0, 0.0,
+                -1.0, 1.0, 0.0,
+                 1.0, -1.0, 0.0,
+                -1.0, -1.0, 0.0
+            ];
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+            var aVertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(aVertexPosition);
+            gl.vertexAttribPointer(aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+
+            // 模型视图矩阵
+            var mvMatrix = okMat4Trans(1.5, 0.0, -7.0);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uMVMatrix"), false, mvMatrix.toArray());
+
+            // 透视
+            var pMatrix = okMat4Proj(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+            gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uPMatrix"), false, pMatrix.toArray());
+
+            // 绘制
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+    </script>
+</head>
+
+<body onload="start();">
+    <canvas id="mycanvas" style="border: none;" width="500" height="500"></canvas>
+</body>
+
+</html>
